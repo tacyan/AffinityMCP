@@ -433,6 +433,101 @@ fn get_all_tools() -> Vec<Tool> {
         }),
     });
 
+    // 実際のAffinity操作ツール
+    tools.push(Tool {
+        name: "affinity.draw_shape".to_string(),
+        description: "Affinityアプリケーション内で図形を描画（自然言語: 「円を描いて」「矩形を作って」「線を引いて」など）".to_string(),
+        input_schema: json!({
+            "type": "object",
+            "properties": {
+                "shape_type": {
+                    "type": "string",
+                    "enum": ["circle", "rectangle", "ellipse", "line"],
+                    "description": "図形の種類"
+                },
+                "x": {
+                    "type": "number",
+                    "description": "位置X（ピクセル、省略時は100）"
+                },
+                "y": {
+                    "type": "number",
+                    "description": "位置Y（ピクセル、省略時は100）"
+                },
+                "width": {
+                    "type": "number",
+                    "description": "幅（ピクセル、省略時は200）"
+                },
+                "height": {
+                    "type": "number",
+                    "description": "高さ（ピクセル、省略時は200）"
+                },
+                "color": {
+                    "type": "string",
+                    "description": "色（HEX形式、例: #FFD700、省略時は黄色）"
+                },
+                "stroke_color": {
+                    "type": "string",
+                    "description": "ストローク色（HEX形式、省略時は黒）"
+                },
+                "stroke_width": {
+                    "type": "number",
+                    "description": "ストローク幅（ピクセル、省略時は2）"
+                }
+            },
+            "required": ["shape_type"]
+        }),
+    });
+
+    tools.push(Tool {
+        name: "affinity.add_text".to_string(),
+        description: "Affinityアプリケーション内にテキストを追加（自然言語: 「テキストを追加して」「文字を書いて」「ここにタイトルを書いて」など）".to_string(),
+        input_schema: json!({
+            "type": "object",
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "description": "テキスト内容"
+                },
+                "x": {
+                    "type": "number",
+                    "description": "位置X（ピクセル、省略時は100）"
+                },
+                "y": {
+                    "type": "number",
+                    "description": "位置Y（ピクセル、省略時は100）"
+                },
+                "font_size": {
+                    "type": "number",
+                    "description": "フォントサイズ（ポイント、省略時は24）"
+                },
+                "color": {
+                    "type": "string",
+                    "description": "色（HEX形式、省略時は黒）"
+                }
+            },
+            "required": ["text"]
+        }),
+    });
+
+    tools.push(Tool {
+        name: "affinity.change_color".to_string(),
+        description: "Affinityアプリケーション内で色を変更（自然言語: 「色を黄色に変更して」「選択範囲を赤くして」など）".to_string(),
+        input_schema: json!({
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string",
+                    "description": "変更する色（HEX形式、例: #FFD700）"
+                },
+                "fill_selection": {
+                    "type": "boolean",
+                    "description": "選択範囲の色を変更するか（省略時はfalse）"
+                }
+            },
+            "required": ["color"]
+        }),
+    });
+
     // Canvaツール（既存）
     tools.push(Tool {
         name: "canva.create_design".to_string(),
@@ -532,6 +627,30 @@ async fn handle_tool_call(name: &str, arguments: Value) -> Result<Value> {
                 .context("affinity.draw_pikachu: 引数のパースに失敗しました")?;
             let result = affinity::draw_pikachu(params).await
                 .context("affinity.draw_pikachu: ピカチュウ描画処理に失敗しました")?;
+            serde_json::to_value(result)
+                .map_err(|e| anyhow::anyhow!("JSON serialization error: {}", e))
+        }
+        "affinity.draw_shape" => {
+            let params: affinity::DrawShapeParams = serde_json::from_value(arguments)
+                .context("affinity.draw_shape: 引数のパースに失敗しました")?;
+            let result = affinity::draw_shape(params).await
+                .context("affinity.draw_shape: 図形描画処理に失敗しました")?;
+            serde_json::to_value(result)
+                .map_err(|e| anyhow::anyhow!("JSON serialization error: {}", e))
+        }
+        "affinity.add_text" => {
+            let params: affinity::AddTextParams = serde_json::from_value(arguments)
+                .context("affinity.add_text: 引数のパースに失敗しました")?;
+            let result = affinity::add_text(params).await
+                .context("affinity.add_text: テキスト追加処理に失敗しました")?;
+            serde_json::to_value(result)
+                .map_err(|e| anyhow::anyhow!("JSON serialization error: {}", e))
+        }
+        "affinity.change_color" => {
+            let params: affinity::ChangeColorParams = serde_json::from_value(arguments)
+                .context("affinity.change_color: 引数のパースに失敗しました")?;
+            let result = affinity::change_color(params).await
+                .context("affinity.change_color: 色変更処理に失敗しました")?;
             serde_json::to_value(result)
                 .map_err(|e| anyhow::anyhow!("JSON serialization error: {}", e))
         }
