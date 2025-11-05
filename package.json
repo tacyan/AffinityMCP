@@ -1,0 +1,29 @@
+{
+  "name": "affinity-mcp",
+  "version": "0.1.0",
+  "description": "npx wrapper that launches the AffinityMCP Rust binary via stdio.",
+  "bin": {
+    "affinity-mcp": "scripts/run.js"
+  },
+  "files": [
+    "scripts",
+    "dist",
+    "README.md",
+    "SPEC.md"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}
+
+
+
+
+
+
+
+
