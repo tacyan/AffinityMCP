@@ -6,6 +6,7 @@ The Universal MCP Server (Rust) exposes tools for Canva workflows—and **Affini
 
 - 🎨 **Natural Language Control**: Control Affinity applications using natural language commands
 - 🖼️ **File Operations**: Open files, create new documents, export in various formats
+- ⚡ **16-Parallel Processing**: Process up to 16 files simultaneously for maximum efficiency
 - 🔧 **Advanced Tools**: Apply filters, get document info, and more
 - 🚀 **Easy Setup**: Simple setup for beginners with comprehensive documentation
 - 🌐 **Cross-Platform Ready**: Currently macOS (AppleScript), Windows support planned
@@ -232,6 +233,24 @@ Close the currently open document.
 - inputs: {}
 - outputs: { "closed": boolean }
 
+#### affinity.batch_open_files ⚡ **16-Parallel**
+
+Open multiple files simultaneously (up to 16 files in parallel).
+
+- inputs: { "paths": string[], "app"?: "Photo"|"Designer"|"Publisher" }
+- outputs: { "success_count": number, "failure_count": number, "results": OpenFileResult[] }
+
+**Natural language example**: "Open multiple files: /path/to/image1.jpg, /path/to/image2.jpg, /path/to/image3.jpg"
+
+#### affinity.batch_export ⚡ **16-Parallel**
+
+Export multiple documents simultaneously (up to 16 exports in parallel).
+
+- inputs: { "exports": ExportParams[] }
+- outputs: { "success_count": number, "failure_count": number, "results": ExportResult[] }
+
+**Natural language example**: "Export all open documents as PDF files"
+
 ### Canva Tools
 
 #### canva.create_design
@@ -261,6 +280,18 @@ AI: [Calls affinity.create_new, then affinity.export]
 ```
 User: "What document is currently open?"
 AI: [Calls affinity.get_active_document]
+```
+
+**Example 4: Batch operations (16-parallel)**
+```
+User: "Open these 5 images simultaneously: /path/to/img1.jpg, /path/to/img2.jpg, /path/to/img3.jpg, /path/to/img4.jpg, /path/to/img5.jpg"
+AI: [Calls affinity.batch_open_files with paths array]
+```
+
+**Example 5: Batch export (16-parallel)**
+```
+User: "Export all open documents as PDF files to the Desktop"
+AI: [Calls affinity.batch_export with multiple export configurations]
 ```
 
 ### Direct Tool Invocation (MCP tool call)

@@ -354,6 +354,85 @@ fn get_all_tools() -> Vec<Tool> {
         }),
     });
 
+    // 16並列バッチ処理ツール
+    tools.push(Tool {
+        name: "affinity.batch_open_files".to_string(),
+        description: "複数のファイルを16並列で同時に開く（自然言語: 「複数のファイルを同時に開いて」など）".to_string(),
+        input_schema: json!({
+            "type": "object",
+            "properties": {
+                "paths": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "開くファイルのパスリスト（最大16個まで）",
+                    "maxItems": 16
+                },
+                "app": {
+                    "type": "string",
+                    "enum": ["Photo", "Designer", "Publisher"],
+                    "description": "使用するAffinityアプリ（省略時は自動判定）"
+                }
+            },
+            "required": ["paths"]
+        }),
+    });
+
+    tools.push(Tool {
+        name: "affinity.batch_export".to_string(),
+        description: "複数のドキュメントを16並列で同時にエクスポート（自然言語: 「複数のファイルを同時にエクスポートして」など）".to_string(),
+        input_schema: json!({
+            "type": "object",
+            "properties": {
+                "exports": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "path": { "type": "string", "description": "エクスポート先のファイルパス" },
+                            "format": {
+                                "type": "string",
+                                "enum": ["pdf", "png", "jpg", "tiff", "svg"],
+                                "description": "エクスポートフォーマット"
+                            },
+                            "quality": {
+                                "type": "number",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "description": "品質（1-100、画像形式の場合）"
+                            }
+                        },
+                        "required": ["path", "format"]
+                    },
+                    "description": "エクスポート設定のリスト（最大16個まで）",
+                    "maxItems": 16
+                }
+            },
+            "required": ["exports"]
+        }),
+    });
+
+    tools.push(Tool {
+        name: "affinity.draw_pikachu".to_string(),
+        description: "ピカチュウを描画してAffinityで開く（自然言語: 「ピカチュウを描いて」「ピカチュウを作って」など）".to_string(),
+        input_schema: json!({
+            "type": "object",
+            "properties": {
+                "output_path": {
+                    "type": "string",
+                    "description": "出力先のファイルパス（省略時は一時ファイル）"
+                },
+                "width": {
+                    "type": "number",
+                    "description": "キャンバスサイズ（幅、省略時は800）"
+                },
+                "height": {
+                    "type": "number",
+                    "description": "キャンバスサイズ（高さ、省略時は800）"
+                }
+            }
+        }),
+    });
+
     // Canvaツール（既存）
     tools.push(Tool {
         name: "canva.create_design".to_string(),
@@ -429,6 +508,30 @@ async fn handle_tool_call(name: &str, arguments: Value) -> Result<Value> {
         "affinity.close_document" => {
             let result = affinity::close_document().await
                 .context("affinity.close_document: ドキュメント閉じる処理に失敗しました")?;
+            serde_json::to_value(result)
+                .map_err(|e| anyhow::anyhow!("JSON serialization error: {}", e))
+        }
+        "affinity.batch_open_files" => {
+            let params: affinity::BatchOpenFilesParams = serde_json::from_value(arguments)
+                .context("affinity.batch_open_files: 引数のパースに失敗しました")?;
+            let result = affinity::batch_open_files(params).await
+                .context("affinity.batch_open_files: 16並列ファイルオープン処理に失敗しました")?;
+            serde_json::to_value(result)
+                .map_err(|e| anyhow::anyhow!("JSON serialization error: {}", e))
+        }
+        "affinity.batch_export" => {
+            let params: affinity::BatchExportParams = serde_json::from_value(arguments)
+                .context("affinity.batch_export: 引数のパースに失敗しました")?;
+            let result = affinity::batch_export(params).await
+                .context("affinity.batch_export: 16並列エクスポート処理に失敗しました")?;
+            serde_json::to_value(result)
+                .map_err(|e| anyhow::anyhow!("JSON serialization error: {}", e))
+        }
+        "affinity.draw_pikachu" => {
+            let params: affinity::DrawPikachuParams = serde_json::from_value(arguments)
+                .context("affinity.draw_pikachu: 引数のパースに失敗しました")?;
+            let result = affinity::draw_pikachu(params).await
+                .context("affinity.draw_pikachu: ピカチュウ描画処理に失敗しました")?;
             serde_json::to_value(result)
                 .map_err(|e| anyhow::anyhow!("JSON serialization error: {}", e))
         }
